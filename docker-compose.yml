@@ -5,8 +5,8 @@ services:
     image: neo4j:4.3.0-enterprise
     container_name: "neo-gds"
     volumes:
-      - $HOME/graph_data/twitch:/data
-      - ./data:/var/lib/neo4j/import
+      - $HOME/graph_data/twitch_streamlit:/data
+      # - ./data:/var/lib/neo4j/import
     ports:
       - "7474:7474"
       - "7687:7687"
