@@ -4,7 +4,10 @@ EXPOSE 8501
 
 WORKDIR /app
 
-COPY requirements.txt ./
+COPY requirements.txt .
 RUN pip install -U pip
 RUN pip install --no-cache-dir -r requirements.txt
 
+COPY ./src /examples
+ENTRYPOINT ["streamlit", "run"]
+CMD ["/examples/intro.py"]
