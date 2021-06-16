@@ -1,5 +1,6 @@
 graphistry==0.18.2
 neo4j==4.2.1
+networkx==2.5.1
 numpy==1.20.3
 pandas==1.2.4
 streamlit==0.82.0
