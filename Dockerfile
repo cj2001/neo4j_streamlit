@@ -1,6 +1,6 @@
 FROM python:3.9.5-slim-buster
 
-EXPOSE 8503
+EXPOSE 8501
 
 WORKDIR /app
 
@@ -10,4 +10,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY ./src /examples
 ENTRYPOINT ["streamlit", "run"]
-CMD ["/src/twitch_demo.py"]
+CMD ["/examples/twitch_demo.py"]
