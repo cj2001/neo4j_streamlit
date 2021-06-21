@@ -50,17 +50,29 @@ emb = st.sidebar.selectbox('Choose an embedding: ', ['FastRP', 'node2vec'])
 
 dim = st.sidebar.slider('Embedding dimension: ', value=10, min_value=2, max_value=50)
 
-emb_graph = st.sidebar.text_input('Enter graph name for embedding creation:')
+emb_graph = st.text_input('Enter graph name for embedding creation:')
 
-if st.sidebar.button('Create embeddings'):
+if st.button('Create embeddings'):
     if emb == 'FastRP':
         emb_query = """CALL gds.fastRP.write('%s', {
-                          embeddingDimension: 10, 
-                          writeProperty: 'frp_all_nodes'}
-                    )""" % (emb_graph)
+                          embeddingDimension: %d, 
+                          writeProperty: 'frp_emb'}
+                    )""" % (emb_graph, dim)
         result = neo4j_utils.query(emb_query)
+
+    elif emb == 'node2vec':
+        emb_query = """CALL gds.beta.node2vec.write('%s', { 
+                          embeddingDimension: %d, 
+                          writeProperty: 'n2v_emb'} 
+                    )""" % (emb_graph, dim)
+        result = neo4j_utils.query(emb_query)
+
     else:
-        st.write('No embs created')
+        st.write('No embedding method selected')
+
+if st.button('Drop embeddings'):
+    neo4j_utils.query('MATCH (n) REMOVE n.frp_emb')
+    neo4j_utils.query('MATCH (n) REMOVE n.n2v_emb')
 
 ##############################
 #
