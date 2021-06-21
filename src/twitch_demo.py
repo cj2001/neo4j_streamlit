@@ -13,36 +13,46 @@ st.sidebar.title('Basic graph interface')
 
 emb = 'FastRP'
 
+create_graph = st.sidebar.text_input('Name of graph to be created: ')
+if st.sidebar.button('Create in-memory graph'):
+    create_graph_query = """CALL gds.graph.create(
+                                    '{}',
+                                    '*',
+                                    '*'
+                            )
+                         """.format(create_graph)
+
+    result = neo4j_utils.query(create_graph_query)
+    st.sidebar.write('Graph ', result[0][2], 'has ', result[0][3], 'nodes and ', result[0][4],' relationships.')
+
 emb = st.sidebar.selectbox('Choose an embedding: ', ['FastRP', 'node2vec'])
 st.write('You selected: ', emb)
 
 dim = st.sidebar.slider('Embedding dimension: ', value=10, min_value=2, max_value=50)
 st.write('We will use ', dim, ' dimensions for the ', emb, ' embedding.')
 
+
+
 num_nodes = neo4j_utils.query('MATCH(n) RETURN COUNT(n)')
 
 st.write('Nodes in graph: ', num_nodes[0][0])
 
-if st.button('Create df'):
-    query = """MATCH (p:Person)-[:BELONGS_TO]->(h:House)
-               RETURN p.name AS name, h.name AS house
-               ORDER BY h.name, p.name"""
-    df = pd.DataFrame([dict(_) for _ in neo4j_utils.query(query)])
-    st.dataframe(df.style.hide_index())
+# create_graph = st.text_input('Name of graph to be created: ')
+# if st.button('Create in-memory graph'):
+#     create_graph_query = """CALL gds.graph.create(
+#                                     '{}',
+#                                     '*',
+#                                     '*'
+#                             )
+#                          """.format(create_graph)
 
-if st.button('Create in-memory graph'):
-    create_graph_query = """CALL gds.graph.create(
-                                    'all',
-                                    '*',
-                                    '*'
-                            )
-                         """
+#     st.write(create_graph_query)
+#     result = neo4j_utils.query(create_graph_query)
+#     st.write(result)
 
-    result = neo4j_utils.query(create_graph_query)
-    st.write(result)
-
+drop_graph = st.text_input('Name of graph to be dropped: ')
 if st.button('Drop in-memory graph'):
-    drop_graph_query = """CALL gds.graph.drop('all')"""
+    drop_graph_query = """CALL gds.graph.drop('{}')""".format(drop_graph)
     result = neo4j_utils.query(drop_graph_query)
     st.write(result)
 
