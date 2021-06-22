@@ -1,3 +1,5 @@
+import argparse
+
 import numpy as np
 import pandas as pd
 
@@ -5,9 +7,19 @@ import streamlit as st
 
 from neo4j_utils import Neo4jConnection
 
-neo4j_utils = Neo4jConnection(uri='bolt://3.231.58.8:7687', 
-                              user='neo4j',
-                              pwd='band-thermometer-sash')
+parser = argparse.ArgumentParser(description='Add uri, user, and pwd for Neo4j connection.')
+parser.add_argument('uri', type=str, default=None)
+parser.add_argument('user', type=str, default='neo4j')
+parser.add_argument('pwd', type=str, default=None)
+
+args=parser.parse_args()
+
+
+# neo4j_utils = Neo4jConnection(uri='bolt://3.231.58.8:7687', 
+#                               user='neo4j',
+#                               pwd='band-thermometer-sash')
+
+neo4j_utils = Neo4jConnection(uri=args.uri, user=args.user, pwd=args.pwd)
 
 st.sidebar.title('Basic graph interface')
 
