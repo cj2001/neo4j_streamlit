@@ -27,7 +27,7 @@ st.set_page_config(layout="wide")
 #
 #   Sidebar content
 #
-##############################
+############################## 
 
 def get_node_labels():
 
@@ -48,7 +48,6 @@ def get_rel_types():
     for el in result:
         rel_ls.append(el[0])
     return rel_ls
-    
 
 st.sidebar.title('In-memory graph management')
 
@@ -75,13 +74,13 @@ st.sidebar.markdown("""---""")
 
 create_graph = st.sidebar.text_input('Name of graph to be created: ')
 if st.sidebar.button('Create in-memory graph'):
+    st.sidebar.write(source, target, rel)
     create_graph_query = """CALL gds.graph.create(
                                     '{}',
-                                    '*',
-                                    '*'
+                                    ['{}', '{}'],
+                                    '{}'
                             )
-                         """.format(create_graph)
-
+                         """.format(create_graph, source, target, rel)
     result = neo4j_utils.query(create_graph_query)
     st.sidebar.write('Graph ', result[0][2], 'has ', result[0][3], 'nodes and ', result[0][4],' relationships.')
 
