@@ -1,9 +1,8 @@
 import argparse
 
-import matplotlib.pyplot as plt
+import altair as alt
 import numpy as np
 import pandas as pd
-import seaborn as sns
 
 from sklearn.manifold import TSNE
 
@@ -107,6 +106,25 @@ def create_graph_df():
 
     return df
 
+
+def create_tsne_plot(emb_name='p.n2v_emb', n_components=2):
+
+    tsne_query = """MATCH (p:Person) RETURN p.name AS name, p.death_year AS death_year, {} AS vec
+    """.format(emb_name)
+    df = pd.DataFrame([dict(_) for _ in neo4j_utils.query(tsne_query)])
+    df['is_dead'] = np.where(df['death_year'].isnull(), 1, 0)
+    #st.dataframe(df)
+
+    X_emb = TSNE(n_components=n_components).fit_transform(list(df['vec']))
+
+    tsne_df = pd.DataFrame(data = {
+        'x': [value[0] for value in X_emb],
+        'y': [value[1] for value in X_emb], 
+        'label': df['is_dead']
+    })
+
+    return tsne_df
+
 col1, col2 = st.beta_columns(2)
 
 #####
@@ -152,11 +170,14 @@ with col1:
 
 with col2:
     st.header('TSNE')
-    if st.button('Show label types'):
-        label_type_query = """CALL db.labels()"""
-        result = neo4j_utils.query(label_type_query)
-        for el in result:
-            st.write(el[0])
+
+    if st.button('Plot embeddings'):
+        tsne_df = create_tsne_plot()
+        ch_alt = alt.Chart(tsne_df).mark_circle().encode(
+            x='x', y='y', color='label'
+        )
+        st.altair_chart(ch_alt, use_container_width=True)
+
 
 
 
