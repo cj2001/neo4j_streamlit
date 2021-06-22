@@ -1,0 +1,42 @@
+version: '3.7'
+
+services:
+  neo4j:
+    image: neo4j:4.2.7-enterprise
+    container_name: "neo-gds"
+    volumes:
+      - $HOME/graph_data/twitch2:/data
+      - ./data:/var/lib/neo4j/import
+      # - $HOME/graph_data/orig_twitch:/var/lib/neo4j/import
+
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    environment:
+      - NEO4J_ACCEPT_LICENSE_AGREEMENT=yes
+      - NEO4J_AUTH=neo4j/slDemo
+      - NEO4JLABS_PLUGINS=["apoc", "graph-data-science"]
+      - apoc.import.file.enabled=true
+      - NEO4J_dbms_memory_pagecache_size=4G
+      - NEO4j_dbms_memory_heap_initial__size=4G
+      - NEO4J_dbms_memory_heap_max__size=8G
+      - NEO4J_dbms_allow__upgrade=true
+      - apoc.export.file.enabled=true
+    networks:
+      - neo_net
+
+  # streamlit:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile
+  #   ports:
+  #     - "8501:8501"
+  #   #volumes:
+  #   #  - ./notebooks:/home/jovyan/work
+  #   links:
+  #     - neo4j
+  #   networks:
+  #     - neo_net
+
+networks:
+  neo_net: 
