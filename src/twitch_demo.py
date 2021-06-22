@@ -136,7 +136,7 @@ col1, col2 = st.beta_columns(2)
 with col1:
     st.header('Embedding management')
     #emb = 'FastRP'
-    emb = st.selectbox('Choose an embedding: ', ['FastRP', 'node2vec'])
+    emb = st.selectbox('Choose an embedding to create: ', ['FastRP', 'node2vec'])
     dim = st.slider('Embedding dimension: ', value=10, min_value=2, max_value=50)
     emb_graph = st.text_input('Enter graph name for embedding creation:')
 
@@ -171,10 +171,19 @@ with col1:
 with col2:
     st.header('TSNE')
 
+    plt_emb = st.selectbox('Choose an embedding to plot: ', ['FastRP', 'node2vec'])
+    if plt_emb == 'FastRP':
+        emb_name = 'p.frp_emb'
+    else:
+        emb_name = 'p.n2v_emb'
+
     if st.button('Plot embeddings'):
-        tsne_df = create_tsne_plot()
-        ch_alt = alt.Chart(tsne_df).mark_circle().encode(
-            x='x', y='y', color='label'
+
+        tsne_df = create_tsne_plot(emb_name=emb_name)
+        ch_alt = alt.Chart(tsne_df).mark_point().encode(
+            x='x', 
+            y='y', 
+            color=alt.Color('label:O', scale=alt.Scale(range=['red', 'blue']))
         )
         st.altair_chart(ch_alt, use_container_width=True)
 
