@@ -7,6 +7,7 @@ import streamlit as st
 
 from neo4j_utils import Neo4jConnection
 
+
 parser = argparse.ArgumentParser(description='Add uri, user, and pwd for Neo4j connection.')
 parser.add_argument('uri', type=str, default=None)
 parser.add_argument('user', type=str, default='neo4j')
@@ -14,14 +15,7 @@ parser.add_argument('pwd', type=str, default=None)
 
 args=parser.parse_args()
 
-
-# neo4j_utils = Neo4jConnection(uri='bolt://3.231.58.8:7687', 
-#                               user='neo4j',
-#                               pwd='band-thermometer-sash')
-
 neo4j_utils = Neo4jConnection(uri=args.uri, user=args.user, pwd=args.pwd)
-
-st.sidebar.title('Basic graph interface')
 
 emb = 'FastRP'
 
@@ -30,6 +24,8 @@ emb = 'FastRP'
 #   Sidebar content
 #
 ##############################
+
+st.sidebar.title('Basic graph interface')
 
 if st.sidebar.button('List existing graphs'):
     list_graph_query = """CALL gds.graph.list()"""
@@ -68,15 +64,9 @@ emb = st.sidebar.selectbox('Choose an embedding: ', ['FastRP', 'node2vec'])
 
 dim = st.sidebar.slider('Embedding dimension: ', value=10, min_value=2, max_value=50)
 
-##############################
-#
-#   Main panel content
-#
-##############################
+emb_graph = st.sidebar.text_input('Enter graph name for embedding creation:')
 
-emb_graph = st.text_input('Enter graph name for embedding creation:')
-
-if st.button('Create embeddings'):
+if st.sidebar.button('Create embeddings'):
     if emb == 'FastRP':
         emb_query = """CALL gds.fastRP.write('%s', {
                           embeddingDimension: %d, 
@@ -94,9 +84,27 @@ if st.button('Create embeddings'):
     else:
         st.write('No embedding method selected')
 
-if st.button('Drop embeddings'):
+if st.sidebar.button('Drop embeddings'):
     neo4j_utils.query('MATCH (n) REMOVE n.frp_emb')
     neo4j_utils.query('MATCH (n) REMOVE n.n2v_emb')
+
+##############################
+#
+#   Main panel content
+#
+##############################
+
+def create_df():
+
+    df_query = """MATCH (n) RETURN n.name, n.frp_emb, n.n2v_emb"""
+    df = pd.DataFrame([dict(_) for _ in neo4j_utils.query(df_query)])
+
+    return df
+
+if st.button('Show embeddings'):
+    df = create_df()
+    st.dataframe(df)
+
 
 
 
