@@ -48,18 +48,28 @@ def get_rel_types():
         rel_ls.append(el[0])
     return rel_ls
 
+
+def get_graph_list():
+
+    graph_ls = []
+    list_graph_query = """CALL gds.graph.list()"""
+    existing_graphs = neo4j_utils.query(list_graph_query)
+    if existing_graphs:
+        for el in existing_graphs:
+            graph_ls.append(el[1])
+    return graph_ls
+
 ############################## 
 
 st.sidebar.title('Graph management')
 
-list_graph_query = """CALL gds.graph.list()"""
-existing_graphs = neo4j_utils.query(list_graph_query)
-if existing_graphs:
-    for el in existing_graphs:
-        st.sidebar.write('Existing in-memory graphs:')
-        st.sidebar.write(el[1])
-else:
-    st.sidebar.write('There are currently no graphs in memory.')
+if st.sidebar.button('Get graph list'):
+    graph_ls = get_graph_list()
+    if len(graph_ls) > 0:
+        for el in graph_ls:
+            st.sidebar.write(el)
+    else:
+        st.sidebar.write('There are currently no graphs in memory.')
 
 st.sidebar.markdown("""---""")
 
@@ -87,7 +97,7 @@ if st.sidebar.button('Create in-memory graph'):
 
 st.sidebar.markdown("""---""")
 
-drop_graph = st.sidebar.text_input('Name of graph to be dropped: ')
+drop_graph = st.sidebar.selectbox('Choose an graph to drop: ', get_graph_list())
 if st.sidebar.button('Drop in-memory graph'):
     drop_graph_query = """CALL gds.graph.drop('{}')""".format(drop_graph)
     result = neo4j_utils.query(drop_graph_query)
@@ -226,7 +236,7 @@ with col2:
             x='x', 
             y='y', 
             color=alt.Color('label:O', scale=alt.Scale(range=['red', 'blue']))
-        )
+        ).properties(width=800, height=800)
         st.altair_chart(ch_alt, use_container_width=True)
 
 
