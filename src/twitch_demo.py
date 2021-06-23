@@ -142,55 +142,71 @@ with col1:
     emb_graph = st.text_input('Enter graph name for embedding creation:')
 
     with st.beta_expander('FastRP embedding management'):
+        st.markdown("Description of hyperparameters can be found [here](https://neo4j.com/docs/graph-data-science/current/algorithms/fastrp/#algorithms-embeddings-fastrp)")
         frp_dim = st.slider('FastRP embedding dimenson', value=4, min_value=2, max_value=50)
         frp_it_weight1 = st.slider('Iteration weight 1', value=0., min_value=0., max_value=1.)
         frp_it_weight2 = st.slider('Iteration weight 2', value=1., min_value=0., max_value=1.)
         frp_it_weight3 = st.slider('Iteration weight 3', value=1., min_value=0., max_value=1.)
         frp_norm = st.slider('FRP normalization strength', value=0., min_value=-1., max_value=1.)
-        frp_seed = st.text_input('Random seed (int):')
+        frp_seed = st.slider('Random seed', value=42, min_value=1, max_value=99)
 
         if st.button('Create FastRP embedding'):
-            emb_query = """CALL gds.fastRP.write('%s', {
+            frp_query = """CALL gds.fastRP.write('%s', {
                             embeddingDimension: %d,
                             iterationWeights: [%f, %f, %f],
                             normalizationStrength: %f,
                             randomSeed: %d,
                             writeProperty: 'frp_emb'
             })
-            """ % (emb_graph, frp_dim, frp_it_weight1, frp_it_weight2, frp_it_weight3, frp_norm, int(frp_seed))
-            result = neo4j_utils.query(emb_query)
-            st.write(emb_query)
+            """ % (emb_graph, frp_dim, frp_it_weight1, 
+                   frp_it_weight2, frp_it_weight3, frp_norm, 
+                   frp_seed)
+            result = neo4j_utils.query(frp_query)
 
-    with st.beta_expander('Embedding management'):
-        emb = st.selectbox('Choose an embedding to create: ', ['FastRP', 'node2vec'])
-        dim = st.slider('Embedding dimension: ', value=10, min_value=2, max_value=50)
-        #emb_graph = st.text_input('Enter graph name for embedding creation:')
+    with st.beta_expander('node2vec embedding creation'):
+        st.markdown("Description of hyperparameters can be found [here](https://neo4j.com/docs/graph-data-science/current/algorithms/node2vec/)")
+        n2v_dim = st.slider('node2vec embedding dimenson', value=4, min_value=2, max_value=50)
+        n2v_walk_length = st.slider('Walk length', value=80, min_value=2, max_value=160)
+        n2v_walks_node = st.slider('Walks per node', value=10, min_value=2, max_value=50)
+        n2v_io_factor = st.slider('inOutFactor', value=1.0, min_value=0.001, max_value=1.0, step=0.05)
+        n2v_ret_factor = st.slider('returnFactor', value=1.0, min_value=0.001, max_value=1.0, step=0.05)
+        n2v_neg_samp_rate = st.slider('negativeSamplingRate', value=10, min_value=5, max_value=20)
+        n2v_iterations = st.slider('Number of training iterations', value=1, min_value=1, max_value=10)
+        n2v_init_lr = st.slider('Initial learning rate', value=0.01, min_value=0.001, max_value=0.1, step=0.01)
+        n2v_min_lr = st.slider('Minimum learning rate', value=0.0001, min_value=0.0001, max_value=0.01, step=0.001)
+        n2v_walk_bs = st.slider('Walk buffer size', value=1000, min_value=100, max_value=2000)
+        n2v_seed = st.slider('Random seed:', value=42, min_value=1, max_value=99)
 
-        if st.button('Create embeddings'):
-            if emb == 'FastRP':
-                emb_query = """CALL gds.fastRP.write('%s', {
-                                embeddingDimension: %d, 
-                                writeProperty: 'frp_emb'}
-                            )""" % (emb_graph, dim)
-                result = neo4j_utils.query(emb_query)
+        if st.button('Create node2vec embedding'):
+            n2v_query = """CALL gds.beta.node2vec.write('%s', {
+                            embeddingDimension: %d,
+                            walkLength: %d,
+                            walksPerNode: %d,
+                            inOutFactor: %f,
+                            returnFactor: %f,
+                            negativeSamplingRate: %d,
+                            iterations: %d,
+                            initialLearningRate: %f,
+                            minLearningRate: %f,
+                            walkBufferSize: %d,
+                            randomSeed: %d,
+                            writeProperty: 'n2v_emb'
+            })
+            """ % (emb_graph, n2v_dim, n2v_walk_length,
+                   n2v_walks_node, n2v_io_factor, n2v_ret_factor,
+                   n2v_neg_samp_rate, n2v_iterations, n2v_init_lr,
+                   n2v_min_lr, n2v_walk_bs, n2v_seed)
+            result = neo4j_utils.query(n2v_query)
 
-            elif emb == 'node2vec':
-                emb_query = """CALL gds.beta.node2vec.write('%s', { 
-                                embeddingDimension: %d, 
-                                writeProperty: 'n2v_emb'} 
-                            )""" % (emb_graph, dim)
-                result = neo4j_utils.query(emb_query)
+    st.markdown("---")
 
-            else:
-                st.write('No embedding method selected')
+    if st.button('Show embeddings'):
+        df = create_graph_df()
+        st.dataframe(df)
 
-        if st.button('Show embeddings'):
-            df = create_graph_df()
-            st.dataframe(df)
-
-        if st.button('Drop embeddings'):
-            neo4j_utils.query('MATCH (n) REMOVE n.frp_emb')
-            neo4j_utils.query('MATCH (n) REMOVE n.n2v_emb')
+    if st.button('Drop embeddings'):
+        neo4j_utils.query('MATCH (n) REMOVE n.frp_emb')
+        neo4j_utils.query('MATCH (n) REMOVE n.n2v_emb')
 
 
 
