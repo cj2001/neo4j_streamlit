@@ -61,6 +61,8 @@ def get_graph_list():
 
 ############################## 
 
+##### Get listing of graphs
+
 st.sidebar.title('Graph management')
 
 if st.sidebar.button('Get graph list'):
@@ -72,6 +74,8 @@ if st.sidebar.button('Get graph list'):
         st.sidebar.write('There are currently no graphs in memory.')
 
 st.sidebar.markdown("""---""")
+
+##### Create in-memory graphs
 
 label_ls = get_node_labels()
 source = st.sidebar.selectbox('Choose a source node type: ', label_ls)
@@ -96,6 +100,8 @@ if st.sidebar.button('Create in-memory graph'):
     st.sidebar.write('Graph ', result[0][2], 'has ', result[0][3], 'nodes and ', result[0][4],' relationships.')
 
 st.sidebar.markdown("""---""")
+
+##### Drop in-memory graph
 
 drop_graph = st.sidebar.selectbox('Choose an graph to drop: ', get_graph_list())
 if st.sidebar.button('Drop in-memory graph'):
