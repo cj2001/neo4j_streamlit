@@ -48,16 +48,18 @@ def get_rel_types():
         rel_ls.append(el[0])
     return rel_ls
 
-st.sidebar.title('In-memory graph management')
+############################## 
 
-if st.sidebar.button('List existing graphs'):
-    list_graph_query = """CALL gds.graph.list()"""
-    result = neo4j_utils.query(list_graph_query)
-    if result:
-        for el in result:
-            st.sidebar.write(el[1])
-    else:
-        st.sidebar.write('There are currently no graphs in memory.')
+st.sidebar.title('Graph management')
+
+list_graph_query = """CALL gds.graph.list()"""
+existing_graphs = neo4j_utils.query(list_graph_query)
+if existing_graphs:
+    for el in existing_graphs:
+        st.sidebar.write('Existing in-memory graphs:')
+        st.sidebar.write(el[1])
+else:
+    st.sidebar.write('There are currently no graphs in memory.')
 
 st.sidebar.markdown("""---""")
 
@@ -125,7 +127,10 @@ def create_tsne_plot(emb_name='p.n2v_emb', n_components=2):
 
     return tsne_df
 
-col1, col2 = st.beta_columns(2)
+##############################
+
+
+col1, col2 = st.beta_columns((1, 2))
 
 #####
 #
@@ -134,37 +139,36 @@ col1, col2 = st.beta_columns(2)
 #####
 
 with col1:
-    st.header('Embedding management')
-    #emb = 'FastRP'
-    emb = st.selectbox('Choose an embedding to create: ', ['FastRP', 'node2vec'])
-    dim = st.slider('Embedding dimension: ', value=10, min_value=2, max_value=50)
-    emb_graph = st.text_input('Enter graph name for embedding creation:')
+    with st.beta_expander('Embedding management'):
+        emb = st.selectbox('Choose an embedding to create: ', ['FastRP', 'node2vec'])
+        dim = st.slider('Embedding dimension: ', value=10, min_value=2, max_value=50)
+        emb_graph = st.text_input('Enter graph name for embedding creation:')
 
-    if st.button('Create embeddings'):
-        if emb == 'FastRP':
-            emb_query = """CALL gds.fastRP.write('%s', {
-                            embeddingDimension: %d, 
-                            writeProperty: 'frp_emb'}
-                        )""" % (emb_graph, dim)
-            result = neo4j_utils.query(emb_query)
+        if st.button('Create embeddings'):
+            if emb == 'FastRP':
+                emb_query = """CALL gds.fastRP.write('%s', {
+                                embeddingDimension: %d, 
+                                writeProperty: 'frp_emb'}
+                            )""" % (emb_graph, dim)
+                result = neo4j_utils.query(emb_query)
 
-        elif emb == 'node2vec':
-            emb_query = """CALL gds.beta.node2vec.write('%s', { 
-                            embeddingDimension: %d, 
-                            writeProperty: 'n2v_emb'} 
-                        )""" % (emb_graph, dim)
-            result = neo4j_utils.query(emb_query)
+            elif emb == 'node2vec':
+                emb_query = """CALL gds.beta.node2vec.write('%s', { 
+                                embeddingDimension: %d, 
+                                writeProperty: 'n2v_emb'} 
+                            )""" % (emb_graph, dim)
+                result = neo4j_utils.query(emb_query)
 
-        else:
-            st.write('No embedding method selected')
+            else:
+                st.write('No embedding method selected')
 
-    if st.button('Show embeddings'):
-        df = create_graph_df()
-        st.dataframe(df)
+        if st.button('Show embeddings'):
+            df = create_graph_df()
+            st.dataframe(df)
 
-    if st.button('Drop embeddings'):
-        neo4j_utils.query('MATCH (n) REMOVE n.frp_emb')
-        neo4j_utils.query('MATCH (n) REMOVE n.n2v_emb')
+        if st.button('Drop embeddings'):
+            neo4j_utils.query('MATCH (n) REMOVE n.frp_emb')
+            neo4j_utils.query('MATCH (n) REMOVE n.n2v_emb')
 
 
 
