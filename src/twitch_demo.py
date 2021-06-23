@@ -157,7 +157,9 @@ col1, col2 = st.beta_columns((1, 2))
 with col1:
     emb_graph = st.text_input('Enter graph name for embedding creation:')
 
-    with st.beta_expander('FastRP embedding management'):
+##### FastRP embedding creation
+
+    with st.beta_expander('FastRP embedding creation'):
         st.markdown("Description of hyperparameters can be found [here](https://neo4j.com/docs/graph-data-science/current/algorithms/fastrp/#algorithms-embeddings-fastrp)")
         frp_dim = st.slider('FastRP embedding dimenson', value=4, min_value=2, max_value=50)
         frp_it_weight1 = st.slider('Iteration weight 1', value=0., min_value=0., max_value=1.)
@@ -178,6 +180,8 @@ with col1:
                    frp_it_weight2, frp_it_weight3, frp_norm, 
                    frp_seed)
             result = neo4j_utils.query(frp_query)
+
+##### node2vec embedding creation
 
     with st.beta_expander('node2vec embedding creation'):
         st.markdown("Description of hyperparameters can be found [here](https://neo4j.com/docs/graph-data-science/current/algorithms/node2vec/)")
@@ -224,7 +228,11 @@ with col1:
         neo4j_utils.query('MATCH (n) REMOVE n.frp_emb')
         neo4j_utils.query('MATCH (n) REMOVE n.n2v_emb')
 
-
+#####
+#
+# t-SNE column (col2)
+#
+#####
 
 with col2:
     st.header('t-SNE')
