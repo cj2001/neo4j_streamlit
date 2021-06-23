@@ -139,10 +139,32 @@ col1, col2 = st.beta_columns((1, 2))
 #####
 
 with col1:
+    emb_graph = st.text_input('Enter graph name for embedding creation:')
+
+    with st.beta_expander('FastRP embedding management'):
+        frp_dim = st.slider('FastRP embedding dimenson', value=4, min_value=2, max_value=50)
+        frp_it_weight1 = st.slider('Iteration weight 1', value=0., min_value=0., max_value=1.)
+        frp_it_weight2 = st.slider('Iteration weight 2', value=1., min_value=0., max_value=1.)
+        frp_it_weight3 = st.slider('Iteration weight 3', value=1., min_value=0., max_value=1.)
+        frp_norm = st.slider('FRP normalization strength', value=0., min_value=-1., max_value=1.)
+        frp_seed = st.text_input('Random seed (int):')
+
+        if st.button('Create FastRP embedding'):
+            emb_query = """CALL gds.fastRP.write('%s', {
+                            embeddingDimension: %d,
+                            iterationWeights: [%f, %f, %f],
+                            normalizationStrength: %f,
+                            randomSeed: %d,
+                            writeProperty: 'frp_emb'
+            })
+            """ % (emb_graph, frp_dim, frp_it_weight1, frp_it_weight2, frp_it_weight3, frp_norm, int(frp_seed))
+            result = neo4j_utils.query(emb_query)
+            st.write(emb_query)
+
     with st.beta_expander('Embedding management'):
         emb = st.selectbox('Choose an embedding to create: ', ['FastRP', 'node2vec'])
         dim = st.slider('Embedding dimension: ', value=10, min_value=2, max_value=50)
-        emb_graph = st.text_input('Enter graph name for embedding creation:')
+        #emb_graph = st.text_input('Enter graph name for embedding creation:')
 
         if st.button('Create embeddings'):
             if emb == 'FastRP':
@@ -173,7 +195,7 @@ with col1:
 
 
 with col2:
-    st.header('TSNE')
+    st.header('t-SNE')
 
     plt_emb = st.selectbox('Choose an embedding to plot: ', ['FastRP', 'node2vec'])
     if plt_emb == 'FastRP':
