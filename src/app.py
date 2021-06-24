@@ -63,7 +63,27 @@ def get_graph_list():
 
 ##### Get listing of graphs
 
-st.sidebar.title('Graph management')
+intro_text = """
+# Introduction
+
+This is an embedding visualizer for the Neo4j Graph Data Science Game of Thrones graph.
+It is intended to be run in a free [Neo4j Sandbox](dev.neo4j.com/sandbox) instance.
+See the repository [README](https://github.com/cj2001/social_media_streamlit/blob/main/README.md) 
+for more information on how to create a Sandbox and populate it with the graph.
+
+The graph we will be working with is the monopartite, undirected graph of `(Person)-[:INTERACTS]-(Person)`.
+Using this graph, we will explore the graph embeddings using the FastRP and node2vec algorithms.  Most,
+but not all, of the hyperparameters are included so you can get a feel for how each impacts the
+overall embedding results.  
+
+**This is not an all-inclusive approach and much will be added to this dashboard over time!!!**
+"""
+
+st.sidebar.markdown(intro_text)
+
+st.sidebar.markdown("""---""")
+
+st.sidebar.header('Graph management')
 
 if st.sidebar.button('Get graph list'):
     graph_ls = get_graph_list()
@@ -77,25 +97,20 @@ st.sidebar.markdown("""---""")
 
 ##### Create in-memory graphs
 
-label_ls = get_node_labels()
-source = st.sidebar.selectbox('Choose a source node type: ', label_ls)
-
-rel_ls = get_rel_types()
-rel = st.sidebar.selectbox('Choose a relationship type: ', rel_ls)
-
-target = st.sidebar.selectbox('Choose a target node type: ', label_ls)
-
-st.sidebar.markdown("""---""")
-
 create_graph = st.sidebar.text_input('Name of graph to be created: ')
 if st.sidebar.button('Create in-memory graph'):
-    st.sidebar.write(source, target, rel)
+    
     create_graph_query = """CALL gds.graph.create(
-                                    '{}',
-                                    ['{}', '{}'],
-                                    '{}'
+                                '%s', 
+                                'Person', 
+                                {
+                                    INTERACTS_WITH: {
+                                            type: 'INTERACTS',
+                                            orientation: 'UNDIRECTED'
+                                        }
+                                }
                             )
-                         """.format(create_graph, source, target, rel)
+                        """ % (create_graph)
     result = neo4j_utils.query(create_graph_query)
     st.sidebar.write('Graph ', result[0][2], 'has ', result[0][3], 'nodes and ', result[0][4],' relationships.')
 
@@ -131,7 +146,6 @@ def create_tsne_plot(emb_name='p.n2v_emb', n_components=2):
     """.format(emb_name)
     df = pd.DataFrame([dict(_) for _ in neo4j_utils.query(tsne_query)])
     df['is_dead'] = np.where(df['death_year'].isnull(), 1, 0)
-    #st.dataframe(df)
 
     X_emb = TSNE(n_components=n_components).fit_transform(list(df['vec']))
 
@@ -155,7 +169,8 @@ col1, col2 = st.beta_columns((1, 2))
 #####
 
 with col1:
-    emb_graph = st.text_input('Enter graph name for embedding creation:')
+    #emb_graph = st.text_input('Enter graph name for embedding creation:')
+    emb_graph = st.selectbox('Enter graph name for embedding creation: ', get_graph_list())
 
 ##### FastRP embedding creation
 
