@@ -74,7 +74,8 @@ for more information on how to create a Sandbox and populate it with the graph.
 The graph we will be working with is the monopartite, undirected graph of `(Person)-[:INTERACTS]-(Person)`.
 Using this graph, we will explore the graph embeddings using the FastRP and node2vec algorithms.  Most,
 but not all, of the hyperparameters are included so you can get a feel for how each impacts the
-overall embedding results.  
+overall embedding results.  The goal is to observe the embedding difference of dead (index label = 0) and
+non-dead (index label = 1) characters with the hope that we can create differentiable clusters.
 
 **This is not an all-inclusive approach and much will be added to this dashboard over time!!!**
 """
