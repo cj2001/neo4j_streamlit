@@ -12,4 +12,4 @@ RUN apt-get update && apt-get install nano
 
 COPY ./src /examples
 
-CMD streamlit run /examples/app.py -- "bolt://3.231.58.8:7687" "neo4j" "band-thermometer-sash"
+CMD streamlit run /examples/app.py -- "bolt://sandbox.ip.address:7687" "neo4j" "sandbox-user-password"
