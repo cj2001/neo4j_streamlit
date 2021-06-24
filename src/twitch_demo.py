@@ -192,8 +192,8 @@ with col1:
         n2v_ret_factor = st.slider('returnFactor', value=1.0, min_value=0.001, max_value=1.0, step=0.05)
         n2v_neg_samp_rate = st.slider('negativeSamplingRate', value=10, min_value=5, max_value=20)
         n2v_iterations = st.slider('Number of training iterations', value=1, min_value=1, max_value=10)
-        n2v_init_lr = st.slider('Initial learning rate', value=0.01, min_value=0.001, max_value=0.1, step=0.01)
-        n2v_min_lr = st.slider('Minimum learning rate', value=0.0001, min_value=0.0001, max_value=0.01, step=0.001)
+        n2v_init_lr = st.select_slider('Initial learning rate', value=0.01, options=[0.001, 0.005, 0.01, 0.05, 0.1])
+        n2v_min_lr = st.select_slider('Minimum learning rate', value=0.0001, options=[0.0001, 0.0005, 0.001, 0.005, 0.01])
         n2v_walk_bs = st.slider('Walk buffer size', value=1000, min_value=100, max_value=2000)
         n2v_seed = st.slider('Random seed:', value=42, min_value=1, max_value=99)
 
