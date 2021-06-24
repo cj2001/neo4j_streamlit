@@ -7,7 +7,8 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install -U pip
 RUN pip install --no-cache-dir -r requirements.txt
-#COPY . .
+
+RUN apt-get update && apt-get install nano
 
 COPY ./src /examples
 #ENTRYPOINT ["streamlit", "run"]
