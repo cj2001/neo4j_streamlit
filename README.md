@@ -1,4 +1,4 @@
-# social_media_streamlit
+# neo4j_streamlit
 ### Written by: Dr. Clair J. Sullivan, Data Science Advocate, Neo4j
 #### email: clair.sullivan@neo4j.com
 #### Twitter: @CJLovesData1
