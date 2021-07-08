@@ -2,4 +2,4 @@ neo4j==4.2.1
 numpy==1.20.3
 pandas==1.2.4
 scikit-learn==0.24.1
-streamlit==0.82.0
+streamlit==0.84.0
