@@ -31,3 +31,44 @@ class Neo4jConnection:
         return response
 
 
+class Neo4jInteractions:
+    
+    def __init__(self, uri, user, pwd):
+        self.__conn = Neo4jConnection(uri=uri, user=user, pwd=pwd )
+        try:
+            res = self.__conn.query('MATCH (n) RETURN COUNT(n)')
+        except Exception as e:
+            print('Neo4jInteractions not properly created: ', e)
+        
+
+    def get_node_labels(self):
+        
+        label_ls = []
+        label_type_query = """CALL db.labels()"""
+        result = self.__conn.query(label_type_query)
+        for el in result:
+            #st.write(el[0])
+            label_ls.append(el[0])
+        return label_ls
+
+    def get_rel_types(self):
+
+        rel_ls = []
+        rel_type_query = """CALL db.relationshipTypes()"""
+        result = self.__conn.query(rel_type_query)
+        for el in result:
+            rel_ls.append(el[0])
+        return rel_ls
+
+
+    def get_graph_list(self):
+
+        graph_ls = []
+        list_graph_query = """CALL gds.graph.list()"""
+        existing_graphs = self.__conn.query(list_graph_query)
+        if existing_graphs:
+            for el in existing_graphs:
+                graph_ls.append(el[1])
+        return graph_ls
+
+
