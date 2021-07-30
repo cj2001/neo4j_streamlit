@@ -91,27 +91,6 @@ st.sidebar.markdown("""---""")
 #
 ##############################
 
-
-
-def create_tsne_plot(emb_name='m.n2v_emb', n_components=2):
-
-    tsne_query = """MATCH (m:Model_Data) RETURN m.name AS name, m.is_food AS is_food, {} AS vec LIMIT 1000
-    """.format(emb_name)
-    df = pd.DataFrame([dict(_) for _ in neo4j_utils.query(tsne_query)])
-
-    X_emb = TSNE(n_components=n_components).fit_transform(list(df['vec']))
-
-    tsne_df = pd.DataFrame(data = {
-        'x': [value[0] for value in X_emb],
-        'y': [value[1] for value in X_emb], 
-        'label': df['is_food']
-    })
-
-    return tsne_df
-
-##############################
-
-
 col1, col2 = st.beta_columns((1, 2))
 
 #####
