@@ -1,3 +1,4 @@
+import pandas as pd
 from neo4j import GraphDatabase
 
 class Neo4jConnection:
@@ -87,3 +88,45 @@ class Neo4jInteractions:
         result = self.__conn.query(create_graph_query)
         # Returns graph name, number of nodes, and number of edges
         return result[0][2], result[0][3], result[0][4]
+    
+    def drop_graph(self, graph_name):
+
+        drop_graph_query = """CALL gds.graph.drop('{}')""".format(graph_name)
+        result = self.__conn.query(drop_graph_query)
+        return result[0][0]
+    
+    def create_graph_df(self, limit=None):
+
+        if limit:
+            df_query = """
+                MATCH (n)
+                RETURN n.name AS name, n.frp_emb, n.n2v_emb
+                LIMIT %d
+            """ % limit
+        else:
+            df_query = """MATCH (n) RETURN n.name, n.frp_emb, n.n2v_emb"""
+        df = pd.DataFrame([dict(_) for _ in self.__conn.query(df_query)])
+
+        return df
+    
+    def create_frp_embs(self, emb_graph, frp_dim, frp_it_weight1, 
+                        frp_it_weight2, frp_it_weight3, frp_norm, frp_seed):
+            frp_query = """CALL gds.fastRP.write('%s', {
+                            embeddingDimension: %d,
+                            iterationWeights: [%f, %f, %f],
+                            normalizationStrength: %f,
+                            randomSeed: %d,
+                            writeProperty: 'frp_emb'
+            })
+            """ % (emb_graph, frp_dim, frp_it_weight1, 
+                   frp_it_weight2, frp_it_weight3, frp_norm, 
+                   frp_seed)
+            result = self.__conn.query(frp_query)
+            return
+
+    def drop_embeddings(self, graph_name):
+
+        self.__conn.query("""MATCH (n) REMOVE n.frp_emb""")
+        self.__conn.query("""MATCH (n) REMOVE n.n2v_emb""")
+
+        return

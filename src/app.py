@@ -73,18 +73,16 @@ st.sidebar.markdown("""---""")
 graph_name = st.sidebar.text_input('Name of graph to be created: ')
 if st.sidebar.button('Create in-memory graph'):
     name, num_nodes, num_edges = neo4j_utils.create_graph(graph_name)
-    st.sidebar.write(name, num_nodes, num_edges)
     st.sidebar.write('Graph ', name, 'has ', num_nodes, 'nodes and ', num_edges,' relationships.')
 
 st.sidebar.markdown("""---""")
 
 ##### Drop in-memory graph
 
-#drop_graph = st.sidebar.selectbox('Choose an graph to drop: ', neo4j_utils.get_graph_list())
-#if st.sidebar.button('Drop in-memory graph'):
-#    drop_graph_query = """CALL gds.graph.drop('{}')""".format(drop_graph)
-#    result = neo4j_utils.query(drop_graph_query)
-#    st.sidebar.write('Graph ', result[0][0],' has been dropped.')
+drop_graph = st.sidebar.selectbox('Choose an graph to drop: ', neo4j_utils.get_graph_list())
+if st.sidebar.button('Drop in-memory graph'):
+    res = neo4j_utils.drop_graph(drop_graph)
+    st.sidebar.write('Graph ', drop_graph, ' has been dropped.')
 
 st.sidebar.markdown("""---""")
 
@@ -94,19 +92,6 @@ st.sidebar.markdown("""---""")
 #
 ##############################
 
-def create_graph_df(limit=None):
-
-    if limit:
-        df_query = """
-            MATCH (n)
-            RETURN n.name AS name, n.frp_emb, n.n2v_emb
-            LIMIT %d
-        """ % limit
-    else:
-        df_query = """MATCH (n) RETURN n.name, n.frp_emb, n.n2v_emb"""
-    df = pd.DataFrame([dict(_) for _ in neo4j_utils.query(df_query)])
-
-    return df
 
 
 def create_tsne_plot(emb_name='m.n2v_emb', n_components=2):
@@ -152,17 +137,8 @@ with col1:
         frp_seed = st.slider('Random seed', value=42, min_value=1, max_value=99)
 
         if st.button('Create FastRP embedding'):
-            frp_query = """CALL gds.fastRP.write('%s', {
-                            embeddingDimension: %d,
-                            iterationWeights: [%f, %f, %f],
-                            normalizationStrength: %f,
-                            randomSeed: %d,
-                            writeProperty: 'frp_emb'
-            })
-            """ % (emb_graph, frp_dim, frp_it_weight1, 
-                   frp_it_weight2, frp_it_weight3, frp_norm, 
-                   frp_seed)
-            result = neo4j_utils.query(frp_query)
+            neo4j_utils.create_frp_embs(emb_graph, frp_dim, frp_it_weight1, frp_it_weight2, 
+                                        frp_it_weight3, frp_norm, frp_seed)
 
 ##### node2vec embedding creation
 
@@ -204,12 +180,11 @@ with col1:
     st.markdown("---")
 
     if st.button('Show embeddings'):
-        df = create_graph_df(limit=10)
+        df = neo4j_utils.create_graph_df(limit=10)
         st.dataframe(df)
 
     if st.button('Drop embeddings'):
-        neo4j_utils.query('MATCH (n) REMOVE n.frp_emb')
-        neo4j_utils.query('MATCH (n) REMOVE n.n2v_emb')
+        neo4j_utils.drop_embeddings(emb_graph)
 
 #####
 #
