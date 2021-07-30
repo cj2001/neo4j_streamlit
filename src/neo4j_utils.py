@@ -1,4 +1,6 @@
 import pandas as pd
+from sklearn.manifold import TSNE
+
 from neo4j import GraphDatabase
 
 class Neo4jConnection:
@@ -158,3 +160,29 @@ class Neo4jInteractions:
         self.__conn.query("""MATCH (n) REMOVE n.n2v_emb""")
 
         return
+
+
+class MLTools:
+
+    def __init__(self, uri, user, pwd):
+        self.__conn = Neo4jConnection(uri=uri, user=user, pwd=pwd )
+        try:
+            res = self.__conn.query('MATCH (n) RETURN COUNT(n)')
+        except Exception as e:
+            print('Neo4jInteractions not properly created: ', e)
+
+    def create_tsne_plot(self, emb_name='p.n2v_emb', n_components=2):
+
+        tsne_query = """MATCH (p:Person) RETURN p.name AS name, p.is_dead AS is_dead, {} AS vec LIMIT 1000
+        """.format(emb_name)
+        df = pd.DataFrame([dict(_) for _ in self.__conn.query(tsne_query)])
+
+        X_emb = TSNE(n_components=n_components).fit_transform(list(df['vec']))
+
+        tsne_df = pd.DataFrame(data = {
+            'x': [value[0] for value in X_emb],
+            'y': [value[1] for value in X_emb], 
+            'label': df['is_dead']
+        })
+
+        return tsne_df

@@ -4,11 +4,9 @@ import altair as alt
 import numpy as np
 import pandas as pd
 
-from sklearn.manifold import TSNE
-
 import streamlit as st
 
-from neo4j_utils import Neo4jInteractions
+from neo4j_utils import Neo4jInteractions, MLTools
 
 
 parser = argparse.ArgumentParser(description='Add uri, user, and pwd for Neo4j connection.')
@@ -19,6 +17,7 @@ parser.add_argument('pwd', type=str, default=None)
 args=parser.parse_args()
 
 neo4j_utils = Neo4jInteractions(uri=args.uri, user=args.user, pwd=args.pwd)
+ml_tools = MLTools(uri=args.uri, user=args.user, pwd=args.pwd)
 
 st.set_page_config(layout="wide")
 
@@ -182,13 +181,14 @@ with col2:
 
     plt_emb = st.selectbox('Choose an embedding to plot: ', ['FastRP', 'node2vec'])
     if plt_emb == 'FastRP':
-        emb_name = 'm.frp_emb'
+        emb_name = 'p.frp_emb'
     else:
-        emb_name = 'm.n2v_emb'
+        emb_name = 'p.n2v_emb'
 
     if st.button('Plot embeddings'):
 
-        tsne_df = create_tsne_plot(emb_name=emb_name)
+        tsne_df = ml_tools.create_tsne_plot(emb_name=emb_name)
+
         ch_alt = alt.Chart(tsne_df).mark_point().encode(
             x='x', 
             y='y', 
