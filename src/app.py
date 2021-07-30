@@ -8,7 +8,7 @@ from sklearn.manifold import TSNE
 
 import streamlit as st
 
-from neo4j_utils import Neo4jConnection
+from neo4j_utils import Neo4jInteractions
 
 
 parser = argparse.ArgumentParser(description='Add uri, user, and pwd for Neo4j connection.')
@@ -18,7 +18,7 @@ parser.add_argument('pwd', type=str, default=None)
 
 args=parser.parse_args()
 
-neo4j_utils = Neo4jConnection(uri=args.uri, user=args.user, pwd=args.pwd)
+neo4j_utils = Neo4jInteractions(uri=args.uri, user=args.user, pwd=args.pwd)
 
 st.set_page_config(layout="wide")
 
@@ -28,36 +28,7 @@ st.set_page_config(layout="wide")
 #
 ############################## 
 
-def get_node_labels():
 
-    label_ls = []
-    label_type_query = """CALL db.labels()"""
-    result = neo4j_utils.query(label_type_query)
-    for el in result:
-        #st.write(el[0])
-        label_ls.append(el[0])
-    return label_ls
-
-
-def get_rel_types():
-
-    rel_ls = []
-    rel_type_query = """CALL db.relationshipTypes()"""
-    result = neo4j_utils.query(rel_type_query)
-    for el in result:
-        rel_ls.append(el[0])
-    return rel_ls
-
-
-def get_graph_list():
-
-    graph_ls = []
-    list_graph_query = """CALL gds.graph.list()"""
-    existing_graphs = neo4j_utils.query(list_graph_query)
-    if existing_graphs:
-        for el in existing_graphs:
-            graph_ls.append(el[1])
-    return graph_ls
 
 ############################## 
 
@@ -77,7 +48,8 @@ but not all, of the hyperparameters are included so you can get a feel for how e
 overall embedding results.  The goal is to observe the embedding difference of dead (index label = 0) and
 non-dead (index label = 1) characters with the hope that we can create differentiable clusters.
 
-**This is not an all-inclusive approach and much will be added to this dashboard over time!!!**
+**This is not an all-inclusive approach and much will be adde
+d to this dashboard over time!!!**
 """
 
 st.sidebar.markdown(intro_text)
@@ -87,7 +59,7 @@ st.sidebar.markdown("""---""")
 st.sidebar.header('Graph management')
 
 if st.sidebar.button('Get graph list'):
-    graph_ls = get_graph_list()
+    graph_ls = neo4j_utils.get_graph_list()
     if len(graph_ls) > 0:
         for el in graph_ls:
             st.sidebar.write(el)
@@ -98,32 +70,21 @@ st.sidebar.markdown("""---""")
 
 ##### Create in-memory graphs
 
-create_graph = st.sidebar.text_input('Name of graph to be created: ')
+graph_name = st.sidebar.text_input('Name of graph to be created: ')
 if st.sidebar.button('Create in-memory graph'):
-    
-    create_graph_query = """CALL gds.graph.create(
-                                '%s', 
-                                'Person', 
-                                {
-                                    INTERACTS_WITH: {
-                                            type: 'INTERACTS',
-                                            orientation: 'UNDIRECTED'
-                                        }
-                                }
-                            )
-                        """ % (create_graph)
-    result = neo4j_utils.query(create_graph_query)
-    st.sidebar.write('Graph ', result[0][2], 'has ', result[0][3], 'nodes and ', result[0][4],' relationships.')
+    name, num_nodes, num_edges = neo4j_utils.create_graph(graph_name)
+    st.sidebar.write(name, num_nodes, num_edges)
+    st.sidebar.write('Graph ', name, 'has ', num_nodes, 'nodes and ', num_edges,' relationships.')
 
 st.sidebar.markdown("""---""")
 
 ##### Drop in-memory graph
 
-drop_graph = st.sidebar.selectbox('Choose an graph to drop: ', get_graph_list())
-if st.sidebar.button('Drop in-memory graph'):
-    drop_graph_query = """CALL gds.graph.drop('{}')""".format(drop_graph)
-    result = neo4j_utils.query(drop_graph_query)
-    st.sidebar.write('Graph ', result[0][0],' has been dropped.')
+#drop_graph = st.sidebar.selectbox('Choose an graph to drop: ', neo4j_utils.get_graph_list())
+#if st.sidebar.button('Drop in-memory graph'):
+#    drop_graph_query = """CALL gds.graph.drop('{}')""".format(drop_graph)
+#    result = neo4j_utils.query(drop_graph_query)
+#    st.sidebar.write('Graph ', result[0][0],' has been dropped.')
 
 st.sidebar.markdown("""---""")
 
@@ -133,27 +94,33 @@ st.sidebar.markdown("""---""")
 #
 ##############################
 
-def create_graph_df():
+def create_graph_df(limit=None):
 
-    df_query = """MATCH (n) RETURN n.name, n.frp_emb, n.n2v_emb"""
+    if limit:
+        df_query = """
+            MATCH (n)
+            RETURN n.name AS name, n.frp_emb, n.n2v_emb
+            LIMIT %d
+        """ % limit
+    else:
+        df_query = """MATCH (n) RETURN n.name, n.frp_emb, n.n2v_emb"""
     df = pd.DataFrame([dict(_) for _ in neo4j_utils.query(df_query)])
 
     return df
 
 
-def create_tsne_plot(emb_name='p.n2v_emb', n_components=2):
+def create_tsne_plot(emb_name='m.n2v_emb', n_components=2):
 
-    tsne_query = """MATCH (p:Person) RETURN p.name AS name, p.death_year AS death_year, {} AS vec
+    tsne_query = """MATCH (m:Model_Data) RETURN m.name AS name, m.is_food AS is_food, {} AS vec LIMIT 1000
     """.format(emb_name)
     df = pd.DataFrame([dict(_) for _ in neo4j_utils.query(tsne_query)])
-    df['is_dead'] = np.where(df['death_year'].isnull(), 1, 0)
 
     X_emb = TSNE(n_components=n_components).fit_transform(list(df['vec']))
 
     tsne_df = pd.DataFrame(data = {
         'x': [value[0] for value in X_emb],
         'y': [value[1] for value in X_emb], 
-        'label': df['is_dead']
+        'label': df['is_food']
     })
 
     return tsne_df
@@ -171,13 +138,13 @@ col1, col2 = st.beta_columns((1, 2))
 
 with col1:
     #emb_graph = st.text_input('Enter graph name for embedding creation:')
-    emb_graph = st.selectbox('Enter graph name for embedding creation: ', get_graph_list())
+    emb_graph = st.selectbox('Enter graph name for embedding creation: ', neo4j_utils.get_graph_list())
 
 ##### FastRP embedding creation
 
     with st.beta_expander('FastRP embedding creation'):
         st.markdown("Description of hyperparameters can be found [here](https://neo4j.com/docs/graph-data-science/current/algorithms/fastrp/#algorithms-embeddings-fastrp)")
-        frp_dim = st.slider('FastRP embedding dimenson', value=4, min_value=2, max_value=50)
+        frp_dim = st.slider('FastRP embedding dimenson', value=4, min_value=2, max_value=256)
         frp_it_weight1 = st.slider('Iteration weight 1', value=0., min_value=0., max_value=1.)
         frp_it_weight2 = st.slider('Iteration weight 2', value=1., min_value=0., max_value=1.)
         frp_it_weight3 = st.slider('Iteration weight 3', value=1., min_value=0., max_value=1.)
@@ -237,7 +204,7 @@ with col1:
     st.markdown("---")
 
     if st.button('Show embeddings'):
-        df = create_graph_df()
+        df = create_graph_df(limit=10)
         st.dataframe(df)
 
     if st.button('Drop embeddings'):
@@ -255,9 +222,9 @@ with col2:
 
     plt_emb = st.selectbox('Choose an embedding to plot: ', ['FastRP', 'node2vec'])
     if plt_emb == 'FastRP':
-        emb_name = 'p.frp_emb'
+        emb_name = 'm.frp_emb'
     else:
-        emb_name = 'p.n2v_emb'
+        emb_name = 'm.n2v_emb'
 
     if st.button('Plot embeddings'):
 

@@ -71,4 +71,19 @@ class Neo4jInteractions:
                 graph_ls.append(el[1])
         return graph_ls
 
+    def create_graph(self, graph_name):
 
+        create_graph_query = """CALL gds.graph.create(
+                                    '%s', 
+                                    'Person', 
+                                    {
+                                        INTERACTS_WITH: {
+                                                type: 'INTERACTS',
+                                                orientation: 'UNDIRECTED'
+                                            }
+                                    }
+                                )
+                            """ % (graph_name)
+        result = self.__conn.query(create_graph_query)
+        # Returns graph name, number of nodes, and number of edges
+        return result[0][2], result[0][3], result[0][4]
