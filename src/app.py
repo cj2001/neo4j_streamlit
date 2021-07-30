@@ -157,26 +157,11 @@ with col1:
         n2v_seed = st.slider('Random seed:', value=42, min_value=1, max_value=99)
 
         if st.button('Create node2vec embedding'):
-            n2v_query = """CALL gds.beta.node2vec.write('%s', {
-                            embeddingDimension: %d,
-                            walkLength: %d,
-                            walksPerNode: %d,
-                            inOutFactor: %f,
-                            returnFactor: %f,
-                            negativeSamplingRate: %d,
-                            iterations: %d,
-                            initialLearningRate: %f,
-                            minLearningRate: %f,
-                            walkBufferSize: %d,
-                            randomSeed: %d,
-                            writeProperty: 'n2v_emb'
-            })
-            """ % (emb_graph, n2v_dim, n2v_walk_length,
-                   n2v_walks_node, n2v_io_factor, n2v_ret_factor,
-                   n2v_neg_samp_rate, n2v_iterations, n2v_init_lr,
-                   n2v_min_lr, n2v_walk_bs, n2v_seed)
-            result = neo4j_utils.query(n2v_query)
-
+            neo4j_utils.create_n2v_embs(emb_graph, n2v_dim, n2v_walk_length,
+                        n2v_walks_node, n2v_io_factor, n2v_ret_factor,
+                        n2v_neg_samp_rate, n2v_iterations, n2v_init_lr,
+                        n2v_min_lr, n2v_walk_bs, n2v_seed)
+                        
     st.markdown("---")
 
     if st.button('Show embeddings'):

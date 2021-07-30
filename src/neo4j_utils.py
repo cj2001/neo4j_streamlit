@@ -124,6 +124,34 @@ class Neo4jInteractions:
             result = self.__conn.query(frp_query)
             return
 
+    def create_n2v_embs(self, emb_graph, n2v_dim, n2v_walk_length,
+                        n2v_walks_node, n2v_io_factor, n2v_ret_factor,
+                        n2v_neg_samp_rate, n2v_iterations, n2v_init_lr,
+                        n2v_min_lr, n2v_walk_bs, n2v_seed):
+        
+        n2v_query = """CALL gds.beta.node2vec.write('%s', {
+                        embeddingDimension: %d,
+                        walkLength: %d,
+                        walksPerNode: %d,
+                        inOutFactor: %f,
+                        returnFactor: %f,
+                        negativeSamplingRate: %d,
+                        iterations: %d,
+                        initialLearningRate: %f,
+                        minLearningRate: %f,
+                        walkBufferSize: %d,
+                        randomSeed: %d,
+                        writeProperty: 'n2v_emb'
+            })
+            """ % (emb_graph, n2v_dim, n2v_walk_length,
+                   n2v_walks_node, n2v_io_factor, n2v_ret_factor,
+                   n2v_neg_samp_rate, n2v_iterations, n2v_init_lr,
+                   n2v_min_lr, n2v_walk_bs, n2v_seed)
+        self.__conn.query(n2v_query)
+            
+        return
+
+
     def drop_embeddings(self, graph_name):
 
         self.__conn.query("""MATCH (n) REMOVE n.frp_emb""")
