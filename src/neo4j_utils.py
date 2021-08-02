@@ -101,7 +101,7 @@ class Neo4jInteractions:
 
         if limit:
             df_query = """
-                MATCH (n)
+                MATCH (n:Person)
                 RETURN n.name AS name, n.frp_emb, n.n2v_emb
                 LIMIT %d
             """ % limit
@@ -173,8 +173,22 @@ class MLTools:
 
     def create_tsne_plot(self, emb_name='p.n2v_emb', n_components=2):
 
-        tsne_query = """MATCH (p:Person) RETURN p.name AS name, p.is_dead AS is_dead, {} AS vec LIMIT 1000
-        """.format(emb_name)
+        if emb_name == 'p.n2v_emb':
+            tsne_query = """MATCH (p:Person) 
+                            WHERE p.is_dead IS NOT NULL
+                            RETURN p.name AS name, p.is_dead AS dead, p.n2v_emb AS vec LIMIT 1000
+            """
+        
+        # This accounts for the fact that FastRP initializes embeddings to 0.0
+        # and unconnected nodes will never be able to update this value.
+        elif emb_name == 'p.frp_emb':
+            tsne_query = """MATCH (p:Person)
+                            WHERE p.is_dead IS NOT NULL
+                            WITH p.name AS name, p.is_dead AS dead, p.frp_emb AS vec
+                            WHERE apoc.coll.sum(vec) <> 0.0
+                            RETURN name, dead, vec
+            """
+
         df = pd.DataFrame([dict(_) for _ in self.__conn.query(tsne_query)])
 
         X_emb = TSNE(n_components=n_components).fit_transform(list(df['vec']))
@@ -182,7 +196,7 @@ class MLTools:
         tsne_df = pd.DataFrame(data = {
             'x': [value[0] for value in X_emb],
             'y': [value[1] for value in X_emb], 
-            'label': df['is_dead']
+            'label': df['dead']
         })
 
         return tsne_df
